@@ -199,11 +199,11 @@ boolean pause(int milliSeconds){
     checkButtons();
     updateState();
     while(millis()<(start+milliSeconds)){
+      if(modeChanged){
+        break; //end all pauses so program goes to next mode
+      }
       checkButtons();
       updateState();
-      if(modeChanged){
-        break;
-      }
     }
 }
 
