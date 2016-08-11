@@ -6,6 +6,10 @@ The program has three important parts that are separated
  - update state           -->     void updateState()
  - run animations         -->     executed in main loop
 
+The code is divided into to parts that are clearly marked, and can be found in the following order
+1. Controll code
+2. Led animation code
+
 Feel free to add more animations!
 
 Check list for adding new animations: 
