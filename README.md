@@ -7,7 +7,7 @@ NB! Before you upload the code to the arduino, please disconnect all wires to an
 The program has three important parts that are separated
  - check buttons          -->     void checkButtons()
  - update state           -->     void updateState()
- - run animations         -->     executed in main loop
+ - run animations         -->     executed in main loop, void loop()
 
 The code is divided into to parts that are clearly marked, and can be found in the following order
 - Controll code
