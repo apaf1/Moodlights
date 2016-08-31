@@ -2,7 +2,7 @@
 
 This is the Arduino program for moodlights in the living room. 
 
-NB! Before you upload the code to the arduino, please disconnect all wires to and from the control box. If you don't disconnect the power supply the voltage might leak into your USB port and damage it. If you don't disconnect the LEDs, the LEDs might be damaged because the USB port on your computer does not supply enough ampere to the LEDs. 
+NB! Before you upload the code to the arduino, please disconnect all wires to and from the control box. If you don't disconnect the power supply the voltage might leak into your USB port and damage it. If you don't disconnect the LEDs, the LEDs might be damaged because the USB port on your computer does not supply enough amperage to the LEDs. 
 
 The program has three important parts that are separated
  - check buttons          -->     void checkButtons()
