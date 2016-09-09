@@ -23,15 +23,15 @@ LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 //define values
 double dial1Value = 0;
 double dial2Value = 0;
+long waitDisplay;
+long waitButton;
 
+//Values for choosing mode
 char* modes[] = {"Color","Color snake", "Rainbow","Hjul","Pulsating"};
 int modesChoice = 0;
 int modesChoiceMax = 4;
 boolean modeChanged = false;
 boolean partyMode = false;
-
-long waitDisplay;
-long waitButton;
 
 //define button values
 boolean bLeftAction = true;
