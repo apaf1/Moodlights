@@ -30,4 +30,6 @@ When the party switch is set to HIGH, the party mode is initiated. In this mode 
 
 Please check your code for mistakes before uploading to github, and atleast make sure that it is compilable :)
 
+For an in depth toutorial on how to use and program the adressable LEDs, see adafruits guide: https://learn.adafruit.com/adafruit-neopixel-uberguide/arduino-library 
+
 
