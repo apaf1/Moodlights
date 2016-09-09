@@ -14,7 +14,7 @@ int bRightPin = 10;
 #define pixelsPIN  13
 
 //Neopixel definitions
-int NUMPIXELS=5;
+int NUMPIXELS=44;
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, pixelsPIN, NEO_GRB + NEO_KHZ800);
 
 // LCD definition
@@ -24,9 +24,9 @@ LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 double dial1Value = 0;
 double dial2Value = 0;
 
-char* modes[] = {"Test", "Color"};
+char* modes[] = {"Color","Color snake", "Rainbow","Hjul","Pulsating"};
 int modesChoice = 0;
-int modesChoiceMax = 1;
+int modesChoiceMax = 4;
 boolean modeChanged = false;
 boolean partyMode = false;
 
@@ -48,6 +48,14 @@ byte r = 0;
 byte g = 0;
 byte b = 0;
 
+//code for pulating() function
+float MAXPULSERATE = 0.003;
+float MINPULSERATEFACTOR = 10;
+float ledPulseRate[44];
+float ledPulseState[44];
+int LARGE_INT = 3.4028235E+38;
+
+
 void setup() {
   pixels.begin(); //initialize neopixels
 
@@ -68,6 +76,12 @@ void setup() {
   //turn on green ON-indicating lED
   digitalWrite(greenLED,HIGH);
 
+  //Initialize array for pulsating() function
+  for(int i=0;i<NUMPIXELS;i++){
+    ledPulseRate[i]=(( (float) (random((MAXPULSERATE/MINPULSERATEFACTOR)*LARGE_INT,MAXPULSERATE*LARGE_INT*2)))/(float) LARGE_INT )-(MAXPULSERATE/2);
+    ledPulseState[i] = (float)  random((MAXPULSERATE*LARGE_INT),(1-MAXPULSERATE)*LARGE_INT)/(float)LARGE_INT;
+  }
+
 }
 
 //Main loop that runs program
@@ -75,10 +89,17 @@ void loop() {
   checkButtons();
   updateState();
 
-  if(modesChoice == 0){
-    pixeltest();
-  }else if(modesChoice ==1){
+  
+  if(modesChoice ==0){
     color();
+  }else if(modesChoice == 1){
+    pixeltest();
+  }else if(modesChoice ==2){
+    rainbowCycle();
+  }else if(modesChoice ==3){
+    hjul();
+  }else if(modesChoice ==4){
+    pulsating();
   }
   
   modeChanged = false;
@@ -149,7 +170,8 @@ boolean updateState(){
   }
 
   if(partyMode){
-    digitalWrite(pinkLED,HIGH); //turn on party-lED
+    initPartyMode();
+    party();
   }else{
     digitalWrite(pinkLED,LOW);
   }
@@ -163,10 +185,10 @@ boolean updateState(){
       lcd.print(modes[modesChoice]);
       lcd.setCursor(0,1);
       lcd.print("A: ");
-      lcd.print(dial1Value);
+      lcd.print((int) dial1Value);
       lcd.setCursor(9,1);
       lcd.print("B: ");
-      lcd.print(dial2Value);
+      lcd.print((int) dial2Value);
   }
 }
 
@@ -212,6 +234,14 @@ boolean pause(int milliSeconds){
 // PIXEL CODE
 //
 //////////////////////////////////////////////////////////////////
+
+void whiteLight(){
+  for(int i=0;i<NUMPIXELS;i++){
+      pixels.setPixelColor(i,pixels.Color(255,255,255));
+    }
+  pixels.show();
+  pause(20);
+}
 
 //set color that is adjusted by brightness
 void setColor(byte red, byte green, byte blue, double brightness){
@@ -265,11 +295,34 @@ void pixeltest(){
 
 //Change the color of the LEDs depending on input from dial
 void color(){
-  for(int i=0;i<NUMPIXELS;i++){
-    pixels.setPixelColor(i,wheel(255*((double)dial1Value/100)));
+  if(dial1Value==100){
+    setColor(255,255,255,dial2Value);
+    for(int i=0;i<NUMPIXELS;i++){
+      pixels.setPixelColor(i,pixels.Color(r,g,b));
+    }
+  }else{
+    for(int i=0;i<NUMPIXELS;i++){
+      pixels.setPixelColor(i,wheel(255*((double)dial1Value/100)));
+    }
   }
   pixels.show();
   pause(10);
+}
+
+// Slightly different, this makes the rainbow equally distributed throughout
+void rainbowCycle() {
+  uint16_t i, j;
+
+  for(j=0; j<256; j++) { 
+    for(i=0; i< NUMPIXELS; i++) {
+      pixels.setPixelColor(i, wheel(((i * 256 / NUMPIXELS) + j) & 255));
+    }
+    pixels.show();
+    pause(dial1Value);
+    if(modeChanged){
+      break;
+    }
+  }
 }
 
 // Input a value 0 to 255 to get a color value.
@@ -287,4 +340,112 @@ uint32_t wheel(byte WheelPos) {
   return pixels.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
 }
 
+void hjul(){
+  for(int j=0;j<255;j++){
+    for(int i=0;i<NUMPIXELS;i++){
+        pixels.setPixelColor(i,wheel(j));
+    }
+    pause(dial1Value);
+    pixels.show();
+    if(modeChanged){
+      break;
+    }
+  }
+}
+
+void pulsating(){
+  for(int i=0;i<NUMPIXELS;i++){
+    pixels.setPixelColor(i,pixels.Color((int) (ledPulseState[i]*0),(int) (ledPulseState[i]*0),(int) (ledPulseState[i]*255)));
+    //Serial.print((ledPulseState[i]));
+    //Serial.print(" ");
+  } 
+  //Serial.println();
+  pixels.show();
+  
+  for(int i=0;i<NUMPIXELS;i++){
+    
+      if(ledPulseState[i]>=(1-MAXPULSERATE)){
+        ledPulseRate[i]=-ledPulseRate[i];
+      
+      }else if(ledPulseState[i]<=(0+MAXPULSERATE)){
+        ledPulseRate[i]=(( (float) (random((MAXPULSERATE/MINPULSERATEFACTOR)*LARGE_INT,MAXPULSERATE*LARGE_INT*2)))/(float) LARGE_INT )-(MAXPULSERATE/2);
+      }
+    
+      ledPulseState[i]=ledPulseState[i]+ledPulseRate[i];
+  } 
+}
+
+
+//////////////////////////////////////////////////////////////////
+//
+// PARTY MODE (use delay() not pause())
+//
+//////////////////////////////////////////////////////////////////
+
+void initPartyMode(){
+    randomSeed(millis());
+    digitalWrite(pinkLED,HIGH); //turn on party-lED
+    lcd.clear();
+    lcd.write("Paaerty mooode!!");
+}
+
+
+void party(){
+  int nPartyModes = 1;
+  pause(10);
+  int mode=(int)random(0,nPartyModes);
+  //while(mode == lastMode){
+    //mode=(int)random(0,nPartyModes);
+  //}  //uncomment when adding more modes
+  int lastMode = mode;
+  while(digitalRead(partySwitch)){
+    //while(mode == lastMode){
+      //mode=(int)random(0,nPartyModes);
+    //}//uncomment when adding more modes
+    lastMode = mode;
+    if(mode==0){
+      blinking();
+    }
+  }
+}
+
+
+void blinking(){
+  int color = random(0,7);
+  if(color==0){
+    oneBlink(250,0,0);
+  }else if(color==1){
+    oneBlink(0,250,0);
+  }else if(color==2){
+    oneBlink(0,0,250);
+  }else if(color==3){
+    oneBlink(150,0,150);
+  }else if(color==4){
+    oneBlink(0,150,150);
+  }else if(color==5){
+    oneBlink(150,150,0);
+  }else if(color>=6){
+    oneBlink(150,150,1500);
+  }
+  
+}
+
+void oneBlink(int r, int g, int b){
+  for(int i=0;i<3;i++){
+      for(int i=0;i<NUMPIXELS;i++){
+        pixels.setPixelColor(i,pixels.Color(r,g,b));
+      }
+      pixels.show();
+      delay(70);
+      off();
+      pixels.show();
+      delay(70);
+    }
+}
+
+void off(){
+  for(int i=0;i<NUMPIXELS;i++){
+    pixels.setPixelColor(i,pixels.Color(0,0,0));
+  }
+}
 
