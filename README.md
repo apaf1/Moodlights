@@ -23,6 +23,10 @@ Check list for adding new animations:
 
 Use pause() instead of delay() as pause() checks buttons while pausing. 
 
+
+Party mode
+When the party switch is set to HIGH, the party mode is initiated. In this mode all button input is ignored and predefined animations are played in random order. Remember to update nPartyModes when adding new animations. Use delay() instead of pause() when writing party mode animations as button input is ignored.  
+
 Please check your code for mistakes before uploading to github, and atleast make sure that it is compilable :)
 
 
