@@ -114,7 +114,7 @@ void loop() {
 void checkButtons(){
   //Read all input pins
   dial1Value = dial2Range(analogRead(A0),0,100); //fix dial-value from 80-1023 to 0 to 100
-  dial2Value = dial2Range(analogRead(A1),1,100);
+  dial2Value = dial2Range(analogRead(A1),0,100);
   bLeftValue = digitalRead(bLeftPin);
   bRightValue = digitalRead(bRightPin);
   partyMode = digitalRead(partySwitch);
@@ -235,6 +235,7 @@ boolean pause(int milliSeconds){
 //
 //////////////////////////////////////////////////////////////////
 
+//Show all LEDs in white light
 void whiteLight(){
   for(int i=0;i<NUMPIXELS;i++){
       pixels.setPixelColor(i,pixels.Color(255,255,255));
@@ -250,6 +251,7 @@ void setColor(byte red, byte green, byte blue, double brightness){
   b = (double)blue*(brightness/100);
 }
 
+//Change color of LEDs, one LED at a time
 void pixeltest(){
   setColor(255,0,0,dial2Value);
   for(int i=0;i<NUMPIXELS;i++){
@@ -309,7 +311,7 @@ void color(){
   pause(10);
 }
 
-// Slightly different, this makes the rainbow equally distributed throughout
+// Show the whole and moving rainbow in the LEDs
 void rainbowCycle() {
   uint16_t i, j;
 
@@ -340,6 +342,7 @@ uint32_t wheel(byte WheelPos) {
   return pixels.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
 }
 
+//Go trough all the colors of the rainbow with all LEDs in same color
 void hjul(){
   for(int j=0;j<255;j++){
     for(int i=0;i<NUMPIXELS;i++){
@@ -353,6 +356,8 @@ void hjul(){
   }
 }
 
+//Each LED has a different increase or decrease in brightness
+//Everytime a LED is dimmed completely down it gets a new rate of brightness change
 void pulsating(){
   for(int i=0;i<NUMPIXELS;i++){
     pixels.setPixelColor(i,pixels.Color((int) (ledPulseState[i]*0),(int) (ledPulseState[i]*0),(int) (ledPulseState[i]*255)));
@@ -389,7 +394,7 @@ void initPartyMode(){
     lcd.write("Paaerty mooode!!");
 }
 
-
+//master party function
 void party(){
   int nPartyModes = 1;
   pause(10);
@@ -409,29 +414,30 @@ void party(){
   }
 }
 
-
+//Blinks in different colors
 void blinking(){
   int color = random(0,7);
   if(color==0){
-    oneBlink(250,0,0);
+    oneBlink(250,0,0,3);
   }else if(color==1){
-    oneBlink(0,250,0);
+    oneBlink(0,250,0,3);
   }else if(color==2){
-    oneBlink(0,0,250);
+    oneBlink(0,0,250,3);
   }else if(color==3){
-    oneBlink(150,0,150);
+    oneBlink(150,0,150,3);
   }else if(color==4){
-    oneBlink(0,150,150);
+    oneBlink(0,150,150,3);
   }else if(color==5){
-    oneBlink(150,150,0);
+    oneBlink(150,150,0,3);
   }else if(color>=6){
-    oneBlink(150,150,1500);
+    oneBlink(150,150,150,3);
   }
   
 }
 
-void oneBlink(int r, int g, int b){
-  for(int i=0;i<3;i++){
+//blink in input color a choosable amount of times
+void oneBlink(int r, int g, int b,int times){
+  for(int i=0;i<times;i++){
       for(int i=0;i<NUMPIXELS;i++){
         pixels.setPixelColor(i,pixels.Color(r,g,b));
       }
@@ -443,6 +449,7 @@ void oneBlink(int r, int g, int b){
     }
 }
 
+//turns all pixels off. NB! need to use pixels.show() for changes to be shown
 void off(){
   for(int i=0;i<NUMPIXELS;i++){
     pixels.setPixelColor(i,pixels.Color(0,0,0));
