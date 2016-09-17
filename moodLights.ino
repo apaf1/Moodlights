@@ -14,22 +14,23 @@ int bRightPin = 10;
 #define pixelsPIN  13
 
 //Neopixel definitions
-int NUMPIXELS=44;
+int NUMPIXELS=132;
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, pixelsPIN, NEO_GRB + NEO_KHZ800);
 
 // LCD definition
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 
 //define values
-double dial1Value = 0;
-double dial2Value = 0;
+float dial1Value = 50;
+float dial2Value = 100;
 long waitDisplay;
 long waitButton;
+long waitDial;
 
 //Values for choosing mode
-char* modes[] = {"Color","Color snake", "Rainbow","Hjul","Pulsating"};
+char* modes[] = {"White light","Color","Hjul", "Rainbow","Color snake","Wave"};
 int modesChoice = 0;
-int modesChoiceMax = 4;
+int modesChoiceMax = 5;
 boolean modeChanged = false;
 boolean partyMode = false;
 
@@ -48,16 +49,13 @@ byte r = 0;
 byte g = 0;
 byte b = 0;
 
-//code for pulating() function
-float MAXPULSERATE = 0.003;
-float MINPULSERATEFACTOR = 10;
-float ledPulseRate[44];
-float ledPulseState[44];
-int LARGE_INT = 3.4028235E+38;
+
+int wavePixel = 0;
 
 
 void setup() {
   pixels.begin(); //initialize neopixels
+  //NUMPIXELS = pixels.numPixels();
 
   //Initialize pins
   pinMode(A0,INPUT); // dial 1
@@ -76,11 +74,6 @@ void setup() {
   //turn on green ON-indicating lED
   digitalWrite(greenLED,HIGH);
 
-  //Initialize array for pulsating() function
-  for(int i=0;i<NUMPIXELS;i++){
-    ledPulseRate[i]=(( (float) (random((MAXPULSERATE/MINPULSERATEFACTOR)*LARGE_INT,MAXPULSERATE*LARGE_INT*2)))/(float) LARGE_INT )-(MAXPULSERATE/2);
-    ledPulseState[i] = (float)  random((MAXPULSERATE*LARGE_INT),(1-MAXPULSERATE)*LARGE_INT)/(float)LARGE_INT;
-  }
 
 }
 
@@ -91,15 +84,17 @@ void loop() {
 
   
   if(modesChoice ==0){
-    color();
+    whiteLight();
   }else if(modesChoice == 1){
-    pixeltest();
+    color();
   }else if(modesChoice ==2){
-    rainbowCycle();
-  }else if(modesChoice ==3){
     hjul();
+  }else if(modesChoice ==3){
+    rainbowCycle();
   }else if(modesChoice ==4){
-    pulsating();
+    pixeltest();
+  }else if(modesChoice ==5){
+    wave();
   }
   
   modeChanged = false;
@@ -113,11 +108,23 @@ void loop() {
 //////////////////////////////////////////////////////////////////
 void checkButtons(){
   //Read all input pins
-  dial1Value = dial2Range(analogRead(A0),0,100); //fix dial-value from 80-1023 to 0 to 100
-  dial2Value = dial2Range(analogRead(A1),0,100);
+  float newDial1Value = dial2Range(analogRead(A0),0,100); //fix dial-value from 80-1023 to 0 to 100
+  float newDial2Value = dial2Range(analogRead(A1),0,100);
   bLeftValue = digitalRead(bLeftPin);
   bRightValue = digitalRead(bRightPin);
   partyMode = digitalRead(partySwitch);
+
+  //Only change dial-read if the change is greater than 5 %
+  if(dial1Value<(newDial1Value+10)||dial1Value>(newDial1Value+10)){
+    waitDial = millis()+2000;
+  }
+  if(dial2Value<(newDial2Value+10)||dial2Value>(newDial2Value+10)){
+    waitDial = millis()+2000;
+  }
+  if(waitDial>millis()){
+    dial1Value = newDial1Value;
+    dial2Value = newDial2Value;
+  }
 
   boolean buttonPressed = false;
 
@@ -196,8 +203,8 @@ boolean updateState(){
 
 //Fix dial value from ~80 to 1023 to other scale. 
 double dial2Range(double dial, double minimum,double maximum){
-  dial = dial-200; //subtract fluctuating lower-value from dial 
-  double out = ( (dial / 823)  *1.05); //give margin to compensate for fluctuating upper-value from dial
+  dial = dial-223; //subtract fluctuating lower-value from dial 
+  double out = ( (dial / 800)  *1.15); //give margin to compensate for fluctuating upper-value from dial
   out = (out*(maximum-minimum))+minimum; //actually change dial-value
 
   //Change values exeding maximum to maximum, and same for minimum. 
@@ -235,10 +242,11 @@ boolean pause(int milliSeconds){
 //
 //////////////////////////////////////////////////////////////////
 
-//Show all LEDs in white light
+
 void whiteLight(){
+  setColor(255,255,255*(dial1Value/100),dial2Value);
   for(int i=0;i<NUMPIXELS;i++){
-      pixels.setPixelColor(i,pixels.Color(255,255,255));
+      pixels.setPixelColor(i,pixels.Color(r,g,b));
     }
   pixels.show();
   pause(20);
@@ -253,43 +261,58 @@ void setColor(byte red, byte green, byte blue, double brightness){
 
 //Change color of LEDs, one LED at a time
 void pixeltest(){
-  setColor(255,0,0,dial2Value);
   for(int i=0;i<NUMPIXELS;i++){
     pixels.setPixelColor(i,pixels.Color(r,g,b));
     pixels.show();
+    setColor(255,0,0,dial2Value);
     pause(dial1Value);
+    if(modeChanged){
+        break; //end all pauses so program goes to next mode
+    }
   }
   pause(500);
 
-  setColor(0,255,0,dial2Value);
   for(int i=0;i<NUMPIXELS;i++){
     pixels.setPixelColor(i,pixels.Color(r,g,b));
     pixels.show();
+    setColor(255,0,0,dial2Value);
     pause(dial1Value);
+    if(modeChanged){
+        break; //end all pauses so program goes to next mode
+    }
   }
   pause(500);
 
-  setColor(0,0,255,dial2Value);
   for(int i=0;i<NUMPIXELS;i++){
     pixels.setPixelColor(i,pixels.Color(r,g,b));
     pixels.show();
+    setColor(0,0,255,dial2Value);
     pause(dial1Value);
+    if(modeChanged){
+        break; //end all pauses so program goes to next mode
+    }
   }
   pause(500);
 
-  setColor(0,255,255,dial2Value);
   for(int i=0;i<NUMPIXELS;i++){
     pixels.setPixelColor(i,pixels.Color(r,g,b));
     pixels.show();
+    setColor(0,255,255,dial2Value);
     pause(dial1Value);
+    if(modeChanged){
+        break; //end all pauses so program goes to next mode
+    }
   }
   pause(500);
 
-  setColor(255,255,255,dial2Value);
   for(int i=0;i<NUMPIXELS;i++){
     pixels.setPixelColor(i,pixels.Color(r,g,b));
     pixels.show();
+    setColor(255,255,255,dial2Value);
     pause(dial1Value);
+    if(modeChanged){
+        break; //end all pauses so program goes to next mode
+    }
   }
   pause(500); 
 }
@@ -342,6 +365,28 @@ uint32_t wheel(byte WheelPos) {
   return pixels.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
 }
 
+
+// Input a value 0 to 255 to get a color value.
+// The colours are a transition r - g - b - back to r.
+void setColor(byte WheelPos) {
+  WheelPos = 255 - WheelPos;
+  if(WheelPos < 85) {
+    r=255 - WheelPos * 3;
+    g=0;
+    b=WheelPos * 3;
+  }else  if(WheelPos < 170) {
+    WheelPos -= 85;
+    r=0;
+    g=WheelPos * 3;
+    b=255 - WheelPos * 3;
+  }else{
+    WheelPos -= 170;
+    r=WheelPos * 3;
+    g=255 - WheelPos * 3;
+    b=0;
+  }
+}
+
 //Go trough all the colors of the rainbow with all LEDs in same color
 void hjul(){
   for(int j=0;j<255;j++){
@@ -356,30 +401,46 @@ void hjul(){
   }
 }
 
-//Each LED has a different increase or decrease in brightness
-//Everytime a LED is dimmed completely down it gets a new rate of brightness change
-void pulsating(){
-  for(int i=0;i<NUMPIXELS;i++){
-    pixels.setPixelColor(i,pixels.Color((int) (ledPulseState[i]*0),(int) (ledPulseState[i]*0),(int) (ledPulseState[i]*255)));
-    //Serial.print((ledPulseState[i]));
-    //Serial.print(" ");
-  } 
-  //Serial.println();
-  pixels.show();
-  
-  for(int i=0;i<NUMPIXELS;i++){
-    
-      if(ledPulseState[i]>=(1-MAXPULSERATE)){
-        ledPulseRate[i]=-ledPulseRate[i];
-      
-      }else if(ledPulseState[i]<=(0+MAXPULSERATE)){
-        ledPulseRate[i]=(( (float) (random((MAXPULSERATE/MINPULSERATEFACTOR)*LARGE_INT,MAXPULSERATE*LARGE_INT*2)))/(float) LARGE_INT )-(MAXPULSERATE/2);
-      }
-    
-      ledPulseState[i]=ledPulseState[i]+ledPulseRate[i];
-  } 
-}
 
+
+void wave(){
+  setColor(255*(dial1Value/100));
+  for(int i=0;i<NUMPIXELS;i++){
+      if(i==wavePixel-5){
+        pixels.setPixelColor(i,pixels.Color((int) (r*0.2),(int) (g*0.2),(int) (b*0.2)));
+      }else if(i==wavePixel-4){
+        pixels.setPixelColor(i,pixels.Color((int) (r*0.4),(int) (g*0.4),(int) (b*0.4)));
+      }else if(i==wavePixel-3){
+        pixels.setPixelColor(i,pixels.Color((int) (r*0.6),(int) (g*0.6),(int) (b*0.6)));
+      }else if(i==wavePixel-2){
+        pixels.setPixelColor(i,pixels.Color((int) (r*0.8),(int) (g*0.8),(int) (b*0.8)));
+      }else if(i==wavePixel-1){
+        pixels.setPixelColor(i,pixels.Color((int) (r*0.9),(int) (g*0.9),(int) (b*0.9)));
+      }else if(i==wavePixel){
+        pixels.setPixelColor(i,pixels.Color((int) (r),(int) (g),(int) (b)));
+      }else if(i==wavePixel+1){
+        pixels.setPixelColor(i,pixels.Color((int) (r*0.9),(int) (g*0.9),(int) (b*0.9)));
+      }else if(i==wavePixel+2){
+        pixels.setPixelColor(i,pixels.Color((int) (r*0.8),(int) (g*0.8),(int) (b*0.8)));
+      }else if(i==wavePixel+3){
+        pixels.setPixelColor(i,pixels.Color((int) (r*0.6),(int) (g*0.6),(int) (b*0.6)));
+      }else if(i==wavePixel+4){
+        pixels.setPixelColor(i,pixels.Color((int) (r*0.4),(int) (g*0.4),(int) (b*0.4)));
+      }else if(i==wavePixel+5){
+        pixels.setPixelColor(i,pixels.Color((int) (r*0.2),(int) (g*0.2),(int) (b*0.2)));
+      }else{
+        pixels.setPixelColor(i,pixels.Color((int) (0),(int) (0),(int) (0)));
+      }
+  }
+  pixels.show();
+  if(wavePixel<(NUMPIXELS)+5){
+    wavePixel=wavePixel+1;
+  }else{
+    wavePixel=-5;
+  }
+  pause(dial2Value);
+  
+}
 
 //////////////////////////////////////////////////////////////////
 //
@@ -397,7 +458,6 @@ void initPartyMode(){
 //master party function
 void party(){
   int nPartyModes = 1;
-  pause(10);
   int mode=(int)random(0,nPartyModes);
   //while(mode == lastMode){
     //mode=(int)random(0,nPartyModes);
@@ -455,4 +515,5 @@ void off(){
     pixels.setPixelColor(i,pixels.Color(0,0,0));
   }
 }
+
 
