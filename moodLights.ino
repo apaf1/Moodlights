@@ -163,7 +163,7 @@ boolean updateState(){
     if(modesChoice>=modesChoiceMax){
         modesChoice = 0;
       }else{
-        modesChoice = modesChoice + 1;
+        modesChoice = modesChoice - 1;
       }
   }
 
@@ -172,7 +172,7 @@ boolean updateState(){
     if(modesChoice<=0){
         modesChoice = modesChoiceMax;
       }else{
-        modesChoice = modesChoice - 1;
+        modesChoice = modesChoice + 1;
       }
   }
 
@@ -320,15 +320,8 @@ void pixeltest(){
 
 //Change the color of the LEDs depending on input from dial
 void color(){
-  if(dial1Value==100){
-    setColor(255,255,255,dial2Value);
-    for(int i=0;i<NUMPIXELS;i++){
-      pixels.setPixelColor(i,pixels.Color(r,g,b));
-    }
-  }else{
-    for(int i=0;i<NUMPIXELS;i++){
+  for(int i=0;i<NUMPIXELS;i++){
       pixels.setPixelColor(i,wheel(255*((double)dial1Value/100)));
-    }
   }
   pixels.show();
   pause(10);
